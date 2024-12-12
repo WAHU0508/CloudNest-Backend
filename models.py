@@ -1,6 +1,6 @@
 # models.py
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy import SQLAlchemy, func
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
 import os
@@ -39,3 +39,27 @@ class User(db.Model):
     
     def __repr__(self):
         return f"<User {self.username}, {self.email}>"
+
+class File(db.Model):
+    __tablename__ = 'files'
+
+    id = db.Column(db.Integer, primary_key=True)
+    file_name = db.Column(db.String, nullable=False)
+    user_id = db.Column(db.String, nullable=False)
+    file_size = db.Column(db.Text)
+    storage_path = db.Column(db.Text)
+    folder_id = db.Column(db.Integer)
+    uploaded_at = db.Column(db.DateTime, default=func.now())
+    updated_at = db.Column(db.DateTime, onupdate= func.now())
+    deleted_at = db.Column(db.DateTime, default=func.now())
+
+
+class Folder(db.Model):
+    __tablename__ = 'folders'
+
+    id = db.Column(db.Integer, primary_key=True)
+    folder_name = db.Column(db.String, nullable=False)
+    user_id = db.Column(db.String, nullable=False)
+    created_at = db.Column(db.DateTime, default=func.now())
+    updated_at = db.Column(db.DateTime, onupdate= func.now())
+    deleted_at = db.Column(db.DateTime, default=func.now())
