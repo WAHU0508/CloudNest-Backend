@@ -2,7 +2,7 @@
 from flask import Flask
 from flask_restful import Api
 from Resources.auth import Register, Login
-from Resources.folders import Folder
+from Resources.files_folders import Folder
 
 
 app = Flask(__name__)
