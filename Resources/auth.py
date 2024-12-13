@@ -6,9 +6,13 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from datetime import datetime, timedelta
 from supabase_client import supabase
+import re
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
+
+# <local-part>@<domain>.<TLD>
+EMAIL_REGEX = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 
 class Register(Resource):
     def post(self):
@@ -25,6 +29,10 @@ class Register(Resource):
         # Check if passwords match
         if password != confirm_password:
             return {"error": "Passwords do not match"}, 400
+        
+        #Validate email
+        if not re.match(EMAIL_REGEX, email):
+            return {"error": "Invalid email format"}, 400
 
         # Check if user exists
         existing_username = supabase.table("users").select("*").eq("username", username).execute()
