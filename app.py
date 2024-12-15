@@ -13,14 +13,14 @@ app.route('/')
 def index():
     return "<h1>Welcome to CloudNest</h1>"
 
+@app.route('/create-folder', methods=["POST"])
 def create_folder_route():
     """Create a folder for the logged-in user."""
-    folder_name = request.json.get('folder_name')  # Get folder name from the request body
+    folder_name = request.json.get('folder_name')
     
     if not folder_name:
         return jsonify({'error': 'Folder name is required'}), 400
 
-    # Call the create_folder function, passing the folder_name and current_user.id
     result = create_folder(folder_name, current_user.id)
     
     if result['success']:

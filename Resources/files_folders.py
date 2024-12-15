@@ -11,7 +11,7 @@ from supabase_client import supabase
 
 app = Flask(__name__)
 api = Api(app)
-db = SQLAlchemy(app)
+
 
 UPLOAD_FOLDER = 'upload/'
 ALLOWED_EXTENSIONS = {'txt', 'doc', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'csv', 'svg', 'mp4'}
@@ -92,9 +92,11 @@ def get_folders():
 
     return [folder for folder in os.listdir(STORAGE_DIR) if os.path.isdir(os.path.join(STORAGE_DIR, folder))]
 
-def create_folder(folder_name, user_id):
+def create_folder(folder_name, user_id=None):
     """Create a new folder for the user and add it to the Supabase database."""
-    
+    if user_id is None:
+        user_id = current_user.id
+
     user_folder_path = os.path.join(STORAGE_DIR, str(user_id), folder_name)
     
     if os.path.exists(user_folder_path):
