@@ -81,29 +81,27 @@ def upload_file():
 def file_too_large(error):
     return jsonify({"error": "File is too large, please upload files smaller than 25MB."}), 413
 
-
+# Folders functions
 if not os.path.exists(STORAGE_DIR):
     os.makedirs(STORAGE_DIR)
 
-def get_folders():
+def get_folders(user_id):
     """Returns a list of all folder names."""
-    if not os.path.exists(STORAGE_DIR):
+    user_folder_path = os.path.join(STORAGE_DIR, int(user_id))
+    if not os.path.exists(user_folder_path):
         return []  
 
-    return [folder for folder in os.listdir(STORAGE_DIR) if os.path.isdir(os.path.join(STORAGE_DIR, folder))]
+    return [folder for folder in os.listdir(user_folder_path) if os.path.isdir(os.path.join(user_folder_path, folder))]
 
-def create_folder(folder_name, user_id=None):
+def create_folder(folder_name, user_id):
     """Create a new folder for the user and add it to the Supabase database."""
-    if user_id is None:
-        user_id = current_user.id
-
-    user_folder_path = os.path.join(STORAGE_DIR, str(user_id), folder_name)
+    user_folder_path = os.path.join(STORAGE_DIR, int(user_id), folder_name)
     
     if os.path.exists(user_folder_path):
         return {"success": False, "message": "Folder already exists"}
 
     try:
-        user_specific_dir = os.path.join(STORAGE_DIR, str(user_id))
+        user_specific_dir = os.path.join(STORAGE_DIR, int(user_id))
         if not os.path.exists(user_specific_dir):
             os.makedirs(user_specific_dir) 
 
@@ -126,9 +124,9 @@ def create_folder(folder_name, user_id=None):
         return {"success": False, "message": f"Failed to create folder: {str(e)}"}
     
 
-def update_folder(old_name, new_name):
-    old_path = os.path.join(STORAGE_DIR, old_name)
-    new_path = os.path.join(STORAGE_DIR, new_name)
+def update_folder(old_name, new_name, user_id):
+    old_path = os.path.join(STORAGE_DIR, int(user_id), old_name)
+    new_path = os.path.join(STORAGE_DIR, int(user_id), new_name)
 
     if not os.path.exists(old_path):
         return {"success": False, "message": "Folder not found"}
@@ -137,13 +135,18 @@ def update_folder(old_name, new_name):
 
     try:
         os.rename(old_path, new_path)
-        return {"success": True, "message": "Folder name updated successfully"}
+        response = supabase.table('folders').update({"folder_name": new_name}).eq('folder_name', old_name).eq('user_id', user_id).execute()
+
+        if response.status_code == 200:
+            return {"success": True, "message": "Folder name updated successfully"}
+        else:
+            return {"Success": False, "message": "Failed to update folder name in database"}
     except OSError as e:
         return {"success": False, "message": f"Error renaming folder: {str(e)}"}
 
-def delete_folder(folder_name):
+def delete_folder(folder_name, user_id):
     """Deletes a folder and its contents."""
-    folder_path = os.path.join(STORAGE_DIR, folder_name)
+    folder_path = os.path.join(STORAGE_DIR, int(user_id), folder_name)
 
     if not os.path.exists(folder_path):
         return {"success": False, "message": "Folder not found"}
@@ -155,7 +158,13 @@ def delete_folder(folder_name):
             for name in dirs:
                 os.rmdir(os.path.join(root, name))
         os.rmdir(folder_path)
-        return {"success": True, "message": "Folder deleted successfully"}
+
+        response = supabase.table('folders').delete().eq('folder_name', folder_name).eq('user_id', user_id).execute()
+
+        if response.status_code == 200:
+            return {"success": True, "message": "Folder deleted successfully"}
+        else:
+            return{"success": False, "message": "Failed to delete folder from database"}
     except OSError as e:
         return {"success": False, "message": f"Error deleting folder: {str(e)}"}
 
@@ -164,10 +173,10 @@ class Folder(Resource):
     def get(self, folder_id=None):
         """Get all folders or a specific folder by folder_id."""
         if folder_id is None:
-            folders = get_folders()
+            folders = get_folders(current_user.id)
             return jsonify({'folders': folders})
 
-        folder_path = os.path.join(STORAGE_DIR, folder_id)
+        folder_path = os.path.join(STORAGE_DIR, int(current_user.id), folder_id)
         if os.path.exists(folder_path):
             return jsonify({'folder': folder_id}), 200
         else:
@@ -179,7 +188,7 @@ class Folder(Resource):
         if not new_name:
             return jsonify({'error': 'New folder name is required'}), 400
 
-        result = update_folder(folder_id, new_name)
+        result = update_folder(folder_id, new_name, current_user.id)
         if result['success']:
             return jsonify({'message': result['message'], 'new_name': new_name}), 200
         else:
@@ -187,7 +196,7 @@ class Folder(Resource):
 
     def delete(self, folder_id):
         """Delete a folder."""
-        result = delete_folder(folder_id)
+        result = delete_folder(folder_id, current_user.id)
         if result['success']:
             return jsonify({'message': result['message']}), 200
         else:

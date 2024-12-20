@@ -59,7 +59,7 @@ class Folder(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     folder_name = db.Column(db.String, nullable=False)
-    user_id = db.Column(db.String, nullable=False)
+    user_id = db.Column(db.Integer, nullable=False)
     created_at = db.Column(db.DateTime, default=func.now())
     updated_at = db.Column(db.DateTime, onupdate= func.now())
     deleted_at = db.Column(db.DateTime, default=func.now())
