@@ -12,7 +12,6 @@ click==8.1.7
 deprecation==2.1.0
 Flask==3.1.0
 Flask-Cors==5.0.0
-Flask-Login==0.6.3
 Flask-Migrate==4.0.7
 Flask-RESTful==0.3.10
 Flask-SQLAlchemy==3.1.1
