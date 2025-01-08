@@ -109,5 +109,3 @@ class Logout(Resource):
         TOKEN_BLACKLIST.add(token)
 
         return {"message": "Logged out successfully"}, 200
-
-

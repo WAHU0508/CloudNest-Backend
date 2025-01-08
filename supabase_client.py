@@ -1,4 +1,4 @@
-# supabase_clint.py
+# supabase_client.py
 from supabase import create_client
 import os
 from dotenv import load_dotenv

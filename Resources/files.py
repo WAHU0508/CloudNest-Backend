@@ -128,5 +128,3 @@ class UploadFile(Resource):
             return {"error": str(e)}, 401
         except Exception as e:
             return {"error": f"An error occurred: {str(e)}"}, 500
-
-
