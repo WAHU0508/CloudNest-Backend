@@ -1,4 +1,4 @@
-# auth/auth.py
+# Resources/auth.py
 from flask_restful import Resource
 from flask import request, jsonify
 import jwt
@@ -10,6 +10,8 @@ import re
 
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM")
+
+TOKEN_BLACKLIST = set()
 
 # <local-part>@<domain>.<TLD>
 EMAIL_REGEX = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
@@ -81,3 +83,31 @@ class Login(Resource):
         }
         token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
         return {"token": token, "id": user["id"], "username": user["username"], "email": user["email"]}, 200
+
+
+class Logout(Resource):
+    def post(self):
+        auth_header = request.headers.get("Authorization")
+        if not auth_header:
+            return {"error": "Authorization token is missing"}, 400
+        
+        # Extract the token
+        try:
+            token = auth_header.split(" ")[1]
+        except IndexError:
+            return {"error": "Invalid token format"}, 400
+        
+        # Decode the token to validate it (optional)
+        try:
+            jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        except jwt.ExpiredSignatureError:
+            return {"error": "Token has already expired"}, 401
+        except jwt.InvalidTokenError:
+            return {"error": "Invalid token"}, 401
+
+        # Add the token to the blacklist
+        TOKEN_BLACKLIST.add(token)
+
+        return {"message": "Logged out successfully"}, 200
+
+
